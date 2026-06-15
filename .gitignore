@@ -1,0 +1,12 @@
+datasets/
+*.pth
+*.pt
+*.ckpt
+__pycache__/
+.ipynb_checkpoints/
+wandb/
+runs/
+*.pyc
+.DS_Store
+.idea/
+.claude/
