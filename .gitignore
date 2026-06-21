@@ -10,3 +10,5 @@ runs/
 .DS_Store
 .idea/
 .claude/
+logs/
+logs_*/
