@@ -131,6 +131,9 @@ Conv2d → MaxPool2d → ReLU/Sigmoid → Linear → Sequential → Loss → 训
 - **GPU 训练三步：** `device = torch.device("cuda" if cuda.is_available() else "cpu")` → `model.to(device)` → `data.to(device)`
   - 损失函数也需要 `.to(device)`（CrossEntropyLoss 无所谓，但涉及可学习参数的 loss 需要）
 - **坑：** 训练循环传了 `xiaoke(imgs)`，测试循环写成 `xiaoke()` 忘记传数据 → `TypeError: forward() missing 1 required positional argument: 'x'`
+- **TensorBoard 可视化：** `SummaryWriter("logs/12_train")` → `add_scalar("train_loss", loss.item(), step)` 每步记录 → `add_scalar("test_loss", avg, epoch)` 每轮记录
+- **逢百输出：** `if total_train_step % 100 == 0` 减少刷屏，`.item()` 取标量避免打印 tensor
+- **测试 loss 平均：** `total_test_loss / len(test_dataloader)` 比直接打印累加 tensor 更可读
 
 ---
 

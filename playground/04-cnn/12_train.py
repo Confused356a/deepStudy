@@ -4,6 +4,7 @@ from model import *
 import torchvision
 from torch.nn import Sequential, Conv2d, MaxPool2d, Flatten, Linear
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 # ---------- 数据 ----------
 train_data = torchvision.datasets.CIFAR10("../../datasets", train=True,
@@ -24,6 +25,9 @@ test_dataloader = DataLoader(test_data, 64)
 # ---------- 设备 ----------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("使用设备: {}".format(device))
+
+# ---------- TensorBoard ----------
+writer = SummaryWriter("../../logs/12_train")
 
 #创建网络模型
 xiaoke = Xiaoke()
@@ -59,7 +63,10 @@ for i in range(epoch):
         optimizer.step()
 
         total_train_step += 1
-        print("训练次数: {}, loss: {}".format(total_train_step, loss))
+
+        if total_train_step % 100 == 0:
+            print("训练次数: {}, loss: {}".format(total_train_step, loss.item()))
+        writer.add_scalar("train_loss", loss.item(), total_train_step)
 
     #测试步骤开始
     total_test_loss = 0
@@ -70,8 +77,12 @@ for i in range(epoch):
             targets = targets.to(device)
             outputs = xiaoke(imgs)
             loss = loss_function(outputs, targets)
-            total_test_loss += loss
-    print("整体测试集上的loss:{}".format(total_test_loss))
+            total_test_loss += loss.item()
+    avg_test_loss = total_test_loss / len(test_dataloader)
+    print("整体测试集上的loss: {}".format(avg_test_loss))
+    writer.add_scalar("test_loss", avg_test_loss, i)
+
+writer.close()
 
 
 
