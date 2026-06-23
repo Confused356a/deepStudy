@@ -2,7 +2,7 @@
 
 > 深度学习系统学习——逐组件理解，从基础到论文复现。基于 PyTorch + CUDA。
 
-*最后更新：2026-06-22*  |  自动维护，每天 22:17 检查更新
+*最后更新：2026-06-23*  |  自动维护，每天 22:17 检查更新
 
 ---
 
@@ -13,7 +13,7 @@
 | 01-pytorch-basics | ⬜ | 待开始 |
 | 02-linear-models | ⬜ | 待开始 |
 | 03-mlp | ⬜ | 待开始 |
-| **04-cnn** | 🟢 | Conv2d → 训练/保存/加载（13个实验） |
+| **04-cnn** | ✅ | Conv2d → 训练/保存/加载（13个实验）|
 | 05-rnn | ⬜ | 待开始 |
 | 06-transfer-learning | ⬜ | 待开始 |
 | 07-generative | ⬜ | 待开始 |
@@ -152,6 +152,43 @@ Conv2d → MaxPool2d → ReLU/Sigmoid → Linear → Sequential → Loss → 训
 | 模型独立文件 | `from model import` 复用，`if __name__` 测试形状 |
 | state_dict() | 无参方法，不能传路径，返回 OrderedDict |
 | GPU 训练三步骤 | `device` → `model.to(device)` → `imgs.to(device)` + `targets.to(device)` |
+
+---
+
+## 🎓 小土堆 PyTorch 系列完结总结
+
+**完成日期：2026-06-23**
+
+### 覆盖内容
+
+| # | 实验文件 | 主题 |
+|---|---------|------|
+| 01 | `01_conv2d_cifar10.py` | Conv2d 卷积层 |
+| 02 | `02_pooling_cifar10.py` | MaxPool2d 池化层 |
+| 03 | `03_relu.py` | ReLU / Sigmoid 激活函数 |
+| 04 | `04_linear.py` | Linear 全连接层 |
+| 05 | `05_seq.py` | Sequential 容器 |
+| 06 | `06_loss.py` | L1Loss / MSELoss / CrossEntropyLoss |
+| 07 | `07_loss_network.py` | 完整训练循环（四步曲） |
+| 08 | `08_optim.py` | SGD 优化器 |
+| 09 | `09_model_pretrained.py` | 预训练模型 VGG16 |
+| 10 | `10_model_save.py` | 模型保存（完整 vs state_dict） |
+| 11 | `11_model_load.py` | 模型加载 + weights_only 安全机制 |
+| 12 | `model.py` | 模型独立成文件 + dummy input 验证 |
+| 13 | `12_train.py` | GPU 完整训练脚本 + TensorBoard |
+
+### 核心能力
+
+- 能用 PyTorch 从零搭建 CNN、运行训练循环、可视化 loss 曲线
+- 理解 Conv2d / MaxPool2d / Linear 每层的尺寸变化
+- 会加载预训练模型并替换分类头做迁移学习
+- 掌握模型保存/加载的两种方式及安全性考量
+- 能用 GPU 训练并排查 dtype / import / forward 参数等常见坑
+- 模型独立文件 + `if __name__ == "__main__"` 的工程化习惯
+
+### 下一步
+
+→ **李沐《动手学深度学习》**(d2l.ai) 系统学习理论与实践
 
 ---
 
