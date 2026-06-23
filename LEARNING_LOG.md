@@ -13,7 +13,7 @@
 | 01-pytorch-basics | ⬜ | 待开始 |
 | 02-linear-models | ⬜ | 待开始 |
 | 03-mlp | ⬜ | 待开始 |
-| **04-cnn** | 🟢 | Conv2d → 预训练模型（9个实验） |
+| **04-cnn** | 🟢 | Conv2d → 训练/保存/加载（13个实验） |
 | 05-rnn | ⬜ | 待开始 |
 | 06-transfer-learning | ⬜ | 待开始 |
 | 07-generative | ⬜ | 待开始 |
@@ -26,8 +26,8 @@
 ### 学习路线
 
 ```
-Conv2d → MaxPool2d → ReLU/Sigmoid → Linear → Sequential → Loss → 训练循环 → SGD优化器 → 预训练模型
- 01        02           03           04         05         06       07          08           09
+Conv2d → MaxPool2d → ReLU/Sigmoid → Linear → Sequential → Loss → 训练循环 → SGD优化器 → 预训练模型 → 保存/加载 → 模型独立文件 → 完整训练脚本
+ 01        02           03           04         05         06       07          08           09         10/11       model        12
 ```
 
 ### 01 — Conv2d 卷积层
@@ -98,6 +98,40 @@ Conv2d → MaxPool2d → ReLU/Sigmoid → Linear → Sequential → Loss → 训
 - **关键问题：** VGG16 的 `forward()` 固定走 features→classifier，add_module 加的层不会被调用
   - 正确：`model.classifier[6] = nn.Linear(4096, 10)`
 
+### 10 — 模型保存
+
+- **方式一（完整模型）：** `torch.save(model, path)` — 结构+参数 pickle 序列化
+- **方式二（推荐）：** `torch.save(model.state_dict(), path)` — 仅参数字典，更轻量
+- `state_dict()` 是**无参方法**，返回 `OrderedDict{层名: 参数tensor}`
+- 坑：`state_dict("path")` 传参报错 — 括号不能传路径
+- `pretrained` 参数已废弃，改用 `weights=None` / `weights="DEFAULT"`
+
+### 11 — 模型加载
+
+- **方式一：** `torch.load(path, weights_only=False)` — 完整反序列化
+- **方式二（推荐）：** 先建架构 → `model.load_state_dict(torch.load(path))`
+- **`weights_only` 安全机制：** PyTorch 2.5+ 默认 `True`，加载完整模型必须显式设 `False`
+- 方式二加载 state_dict 用默认 `weights_only=True` 即可，更安全
+- 文件名坑：`vgg16_method_pth`（下划线）✗ → `vgg16_method2.pth`（点号）✓
+
+### model — 模型独立成文件
+
+- 模型定义和训练脚本分离：`model.py` 只放网络 + 形状测试
+- `if __name__ == "__main__":` — 可直接测试，也可被 `from model import Xiaoke` 安全导入
+- `torch.ones(batch, C, H, W)` 做 dummy input，秒级验证输出 shape
+- 再次踩坑 `import nn`（pip 的 nn 包覆盖 torch.nn）— 必须写 `import torch.nn as nn`
+
+### 12 — 完整训练脚本
+
+- `from model import *` — 从独立文件导入模型，不重复定义
+- 训练集/测试集分离：`train=True` / `train=False`
+- `len(dataset)` 获取数据集大小
+- 学习率作为变量管理：`learning_rate = 0.001`
+- 10 epoch 训练循环，记录 `total_train_step`
+- **GPU 训练三步：** `device = torch.device("cuda" if cuda.is_available() else "cpu")` → `model.to(device)` → `data.to(device)`
+  - 损失函数也需要 `.to(device)`（CrossEntropyLoss 无所谓，但涉及可学习参数的 loss 需要）
+- **坑：** 训练循环传了 `xiaoke(imgs)`，测试循环写成 `xiaoke()` 忘记传数据 → `TypeError: forward() missing 1 required positional argument: 'x'`
+
 ---
 
 ## 贯穿全程的工程经验
@@ -111,6 +145,10 @@ Conv2d → MaxPool2d → ReLU/Sigmoid → Linear → Sequential → Loss → 训
 | TensorBoard | add_images（图）、add_graph（结构）、add_scalar（曲线） |
 | running_loss | 用 `.item()` 取标量累加，epoch 末取平均 |
 | 预训练模型 | 替换分类头（非 add_module），冻结 backbone 可选 |
+| 模型保存 | state_dict 优于完整模型；`weights_only=False` 需显式声明 |
+| 模型独立文件 | `from model import` 复用，`if __name__` 测试形状 |
+| state_dict() | 无参方法，不能传路径，返回 OrderedDict |
+| GPU 训练三步骤 | `device` → `model.to(device)` → `imgs.to(device)` + `targets.to(device)` |
 
 ---
 
