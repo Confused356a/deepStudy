@@ -2,7 +2,7 @@
 
 > 深度学习系统学习——逐组件理解，从基础到论文复现。基于 PyTorch + CUDA。
 
-*最后更新：2026-06-24*  |  自动维护，每天 22:17 检查更新
+*最后更新：2026-06-24*  |  自动维护，每天 22:17 检查更新（今日已手动同步 d2l 进展）
 
 ---
 
@@ -14,6 +14,8 @@
 | 02-linear-models | ⬜ | 待开始 |
 | 03-mlp | ⬜ | 待开始 |
 | **04-cnn** | ✅ | Conv2d → 训练/保存/加载（13个实验）|
+| **d2l-Ch02** | ✅ | 预备知识 6 小节（2026-06-24 完成） |
+| **d2l-Ch03+** | 🔄 | 线性回归 → 现代 CNN → Transformer（待继续）|
 | 05-rnn | ⬜ | 待开始 |
 | 06-transfer-learning | ⬜ | 待开始 |
 | 07-generative | ⬜ | 待开始 |
@@ -193,7 +195,37 @@ Conv2d → MaxPool2d → ReLU/Sigmoid → Linear → Sequential → Loss → 训
 
 ### 下一步
 
-→ **李沐《动手学深度学习》**(d2l.ai) 系统学习理论与实践
+→ **李沐《动手学深度学习》**(d2l.ai) 🔄 进行中 — 2026-06-24 启动，Ch02 预备知识已完成
+
+---
+
+## d2l — 李沐《动手学深度学习》
+
+### Ch02 预备知识（2026-06-24 完成）
+
+> 代码位置: `d2l/ch02-prelim/`，每个 `.py` 文件可直接运行
+
+| # | 文件 | 主题 | 关键收获 |
+|---|------|------|----------|
+| 01 | `01_ndarray.py` | 数据操作 | 广播规则（末维对齐）、`+=` 原地操作、tensor↔numpy 共享内存 |
+| 02 | `02_data_preprocessing.py` | 数据预处理 | pandas → tensor 流水线：`read_csv → fillna → get_dummies → torch.tensor` |
+| 03 | `03_linear_algebra.py` | 线性代数 | `dim` 是聚合操作核心、`keepdim=True` 方便广播、`@` 才是矩阵乘 |
+| 04 | `04_calculus.py` | 微积分 | 梯度下降直觉可视化、链式法则=反向传播理论基础 |
+| 05 | `05_autograd.py` | ⭐ 自动求导 | **grad 累加机制** = `zero_grad()` 存在理由、`detach` vs `no_grad`、动态图优势 |
+| 06 | `06_probability.py` | 概率统计 | NLL = -log P(y_true/x) → 交叉熵本质、大数定律可视化 |
+
+### Ch02 工程踩坑
+
+| 坑 | 表现 | 解决 |
+|----|------|------|
+| GBK 编码 | emoji/特殊 Unicode（✅✓²∇∂）→ `UnicodeEncodeError` | Windows 终端不支持，全改 ASCII |
+| `randn_like(Long)` | X 默认 int64 → `NotImplementedError` | `X.float()` 转换 |
+| 二次 `backward()` | 默认首轮释放计算图 → `RuntimeError` | `backward(retain_graph=True)` |
+
+### Ch02 与小土堆的关系
+
+前半部分（tensor 操作、autograd）在小土堆中已大量使用，但 d2l 讲得更系统。
+真正新增的：pandas 预处理、广播规则、`keepdim`/`cumsum`、`detach` vs `no_grad`、NLL 数学推导。
 
 ---
 
