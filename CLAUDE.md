@@ -8,6 +8,12 @@
 
 ```
 deepStudy/
+├── d2l/              # 李沐《动手学深度学习》按章节学习
+│   └── chXX-name/
+│       ├── README.md    # 本章笔记、公式推导、实验结果
+│       ├── model.py     # 网络定义
+│       ├── train.py     # 训练脚本
+│       └── notes/       # 推导草稿
 ├── papers/          # 按论文组织的复现代码，每个子目录一篇论文
 │   └── <paper-slug>/
 │       ├── README.md    # 论文要点、复现笔记
