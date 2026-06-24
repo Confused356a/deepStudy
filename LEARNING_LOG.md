@@ -2,7 +2,7 @@
 
 > 深度学习系统学习——逐组件理解，从基础到论文复现。基于 PyTorch + CUDA。
 
-*最后更新：2026-06-23*  |  自动维护，每天 22:17 检查更新
+*最后更新：2026-06-24*  |  自动维护，每天 22:17 检查更新
 
 ---
 
@@ -134,6 +134,11 @@ Conv2d → MaxPool2d → ReLU/Sigmoid → Linear → Sequential → Loss → 训
 - **TensorBoard 可视化：** `SummaryWriter("logs/12_train")` → `add_scalar("train_loss", loss.item(), step)` 每步记录 → `add_scalar("test_loss", avg, epoch)` 每轮记录
 - **逢百输出：** `if total_train_step % 100 == 0` 减少刷屏，`.item()` 取标量避免打印 tensor
 - **测试 loss 平均：** `total_test_loss / len(test_dataloader)` 比直接打印累加 tensor 更可读
+- **测试正确率计算（2026-06-24 新增）：**
+  - `(outputs.argmax(1) == targets).sum()` — argmax 沿 dim=1 取预测类别，与标签比对的 True/False 求和得到每 batch 正确数
+  - `total_accuracy / test_data_size` — 累加所有 batch 正确数除以测试集总样本数，得到整体正确率（0~1 小数）
+  - `writer.add_scalar("test_accuracy", ..., total_test_step)` — 正确率同步写入 TensorBoard
+  - **注意：** `total_accuracy` 是 Python int（`.sum()` 返回的是 tensor 但累加和除法会自动转换），不会像 loss 那样堆积计算图
 
 ---
 

@@ -70,6 +70,7 @@ for i in range(epoch):
 
     #测试步骤开始
     total_test_loss = 0
+    total_accuracy = 0
     with torch.no_grad():
         for data in test_dataloader:
             imgs, targets = data
@@ -78,9 +79,15 @@ for i in range(epoch):
             outputs = xiaoke(imgs)
             loss = loss_function(outputs, targets)
             total_test_loss += loss.item()
+            accuracy = (outputs.argmax(1) == targets).sum()
+            total_accuracy += accuracy
+
     avg_test_loss = total_test_loss / len(test_dataloader)
+
     print("整体测试集上的loss: {}".format(avg_test_loss))
+    print("整体测试集上的正确率：{}".format(total_accuracy/test_data_size))
     writer.add_scalar("test_loss", avg_test_loss, i)
+    writer.add_scalar("test_accuracy", total_accuracy/test_data_size, total_test_step)
 
 writer.close()
 
