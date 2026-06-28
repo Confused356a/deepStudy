@@ -2,7 +2,7 @@
 
 > 深度学习系统学习——逐组件理解，从基础到论文复现。基于 PyTorch + CUDA。
 
-*最后更新：2026-06-24*  |  自动维护，每天 22:17 检查更新（今日已手动同步 d2l 进展）
+*最后更新：2026-06-28*  |  自动维护，每天 22:17 检查更新
 
 ---
 
@@ -15,7 +15,8 @@
 | 03-mlp | ⬜ | 待开始 |
 | **04-cnn** | ✅ | Conv2d → 训练/保存/加载（13个实验）|
 | **d2l-Ch02** | ✅ | 预备知识 6 小节（2026-06-24 完成） |
-| **d2l-Ch03+** | 🔄 | 线性回归 → 现代 CNN → Transformer（待继续）|
+| **d2l-Ch03** | 🔄 | 线性回归：从零实现 (7 步) + 梯度下降可视化 (2026-06-28) |
+| d2l-Ch04+ | ⬜ | MLP → 现代 CNN → Transformer（待继续）|
 | 05-rnn | ⬜ | 待开始 |
 | 06-transfer-learning | ⬜ | 待开始 |
 | 07-generative | ⬜ | 待开始 |
@@ -226,6 +227,52 @@ Conv2d → MaxPool2d → ReLU/Sigmoid → Linear → Sequential → Loss → 训
 
 前半部分（tensor 操作、autograd）在小土堆中已大量使用，但 d2l 讲得更系统。
 真正新增的：pandas 预处理、广播规则、`keepdim`/`cumsum`、`detach` vs `no_grad`、NLL 数学推导。
+
+### Ch03 线性神经网络（2026-06-28 开始）
+
+> 代码位置: `d2l/ch03-linear/`
+
+| # | 文件 | 主题 | 关键收获 |
+|---|------|------|----------|
+| 01 | `01_linear_regression_theory.py` | 3.1 线性回归理论 | 解析解推导、梯度下降直觉、学习率影响、batch size 选择 |
+| 02 | `02_scratch_linear_regression.py` | 3.2 从零实现 (完整 7 步) | 数据生成→迭代器→初始化→模型→损失→SGD→训练循环 |
+
+### Ch03 关键知识点
+
+**解析解 vs 梯度下降**
+- 线性回归: w* = (X^T X)^(-1) X^T y — 唯一有闭式解的"神经网络"
+- 深度学习全部用梯度下降 — 因为模型有非线性，没有解析解
+
+**小批量 SGD 的 3 步**
+```
+with torch.no_grad():           # 参数更新不追踪
+    param -= lr * param.grad / batch_size   # /batch_size 因 loss 是 sum
+    param.grad.zero_()          # 清零! 否则下次 backward 累加
+```
+
+**训练循环 = 深度学习的核心**
+```python
+for epoch:
+    for X, y in data_iter():
+        l = loss(model(X, w, b), y)   # forward + loss
+        l.sum().backward()             # backward
+        sgd([w, b], lr, batch_size)    # update (内含 zero_grad)
+```
+这 4 行代码覆盖 CNN/RNN/Transformer —— 所有深度学习训练都是这个循环。
+
+**新学到的点**
+- `yield` 生成器惰性求值 — 百万级数据集的必备工程技能
+- loss 除以 2 — 为了让导数常数抵消，这种"为梯度设计"的思路贯穿 DL
+- `no_grad()` 块 — 框架不会自动区分"前向计算"和"参数更新"，必须显式声明
+- 3 epoch 从随机初始值学到误差 10^-4 级别的参数 — 线性问题 + 线性模型 = 几乎完美拟合
+
+### Ch03 工程踩坑
+
+| 坑 | 表现 | 解决 |
+|----|------|------|
+| (暂无 — 代码一次跑通) | — | 注意: `matplotlib` 中文字体需 `font.sans-serif` 设置 |
+
+
 
 ---
 
