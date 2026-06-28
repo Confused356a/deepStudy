@@ -2,7 +2,7 @@
 
 > 深度学习系统学习——逐组件理解，从基础到论文复现。基于 PyTorch + CUDA。
 
-*最后更新：2026-06-28*  |  自动维护，每天 22:17 检查更新
+*最后更新：2026-06-28 21:50*  |  自动维护，每天检查更新
 
 ---
 
@@ -15,7 +15,7 @@
 | 03-mlp | ⬜ | 待开始 |
 | **04-cnn** | ✅ | Conv2d → 训练/保存/加载（13个实验）|
 | **d2l-Ch02** | ✅ | 预备知识 6 小节（2026-06-24 完成） |
-| **d2l-Ch03** | 🔄 | 线性回归：从零实现 (7 步) + 梯度下降可视化 (2026-06-28) |
+| **d2l-Ch03** | ✅ | 线性神经网络全 7 节：线性回归+Softmax 分类 — 从零 & 简洁双版本 (2026-06-28) |
 | d2l-Ch04+ | ⬜ | MLP → 现代 CNN → Transformer（待继续）|
 | 05-rnn | ⬜ | 待开始 |
 | 06-transfer-learning | ⬜ | 待开始 |
@@ -228,16 +228,23 @@ Conv2d → MaxPool2d → ReLU/Sigmoid → Linear → Sequential → Loss → 训
 前半部分（tensor 操作、autograd）在小土堆中已大量使用，但 d2l 讲得更系统。
 真正新增的：pandas 预处理、广播规则、`keepdim`/`cumsum`、`detach` vs `no_grad`、NLL 数学推导。
 
-### Ch03 线性神经网络（2026-06-28 开始）
+### Ch03 线性神经网络（2026-06-28 完成 ✅）
 
-> 代码位置: `d2l/ch03-linear/`
+> 代码位置: `d2l/ch03-linear/`，共 7 节，从零 + 简洁双版本对照
 
 | # | 文件 | 主题 | 关键收获 |
 |---|------|------|----------|
 | 01 | `01_linear_regression_theory.py` | 3.1 线性回归理论 | 解析解推导、梯度下降直觉、学习率影响、batch size 选择 |
 | 02 | `02_scratch_linear_regression.py` | 3.2 从零实现 (完整 7 步) | 数据生成→迭代器→初始化→模型→损失→SGD→训练循环 |
+| 03 | `03_concise_linear_regression.py` | 3.3 简洁实现 | TensorDataset+DataLoader、nn.Linear、nn.MSELoss、optim.SGD |
+| 04 | `04_softmax_regression.py` | 3.4 Softmax 回归理论 | softmax 函数、交叉熵直觉、温度参数、数值稳定技巧 |
+| 05 | `05_fashion_mnist.py` | 3.5 图像分类数据集 | Fashion-MNIST 加载、ToTensor、DataLoader、类别分布 |
+| 06 | `06_softmax_scratch.py` | 3.6 Softmax 从零实现 | 手写交叉熵、softmax 稳定版、Accumulator、混淆矩阵、错误分析 |
+| 07 | `07_softmax_concise.py` | 3.7 Softmax 简洁实现 | nn.CrossEntropyLoss=LogSoftmax+NLLLoss、nn.Flatten、权重可视化 |
 
-### Ch03 关键知识点
+---
+
+### 3.1–3.2 线性回归：理论与从零实现
 
 **解析解 vs 梯度下降**
 - 线性回归: w* = (X^T X)^(-1) X^T y — 唯一有闭式解的"神经网络"
@@ -266,11 +273,176 @@ for epoch:
 - `no_grad()` 块 — 框架不会自动区分"前向计算"和"参数更新"，必须显式声明
 - 3 epoch 从随机初始值学到误差 10^-4 级别的参数 — 线性问题 + 线性模型 = 几乎完美拟合
 
+---
+
+### 3.3 线性回归简洁实现：从零 → 框架的对照
+
+**框架一行替代手写十几行：**
+
+| 从零 (~40 行) | 框架 (~10 行) |
+|---|---|
+| `w=normal(...); b=zeros(...); def linreg(X,w,b)` | `model = nn.Linear(2, 1)` |
+| `def squared_loss(y_hat, y): ((y_hat-y)^2)/2` | `loss_fn = nn.MSELoss(reduction='none')` |
+| `def sgd(params, lr, bs): p-=lr*p.grad/bs; p.grad.zero_()` | `optimizer.zero_grad()` + `optimizer.step()` |
+| `def data_iter(): randperm+yield` | `DataLoader(TensorDataset(X,y), batch_size=bs, shuffle=True)` |
+
+**关键差异：损失函数的常数因子**
+- 从零: `((y_hat - y)^2) / 2` ← 除以 2 让梯度简洁（导数中常数抵消）
+- 框架: `(y_hat - y)^2` ← 标准 MSE，不减半
+- 梯度只差常数因子 2，可通过学习率吸收 → 最终收敛结果等价
+
+**实验验证：** 从零和简洁实现在相同数据上训练 5 epoch，loss 下降曲线几乎重合，最终参数都收敛到真实值附近。
+
+---
+
+### 3.4 Softmax 回归：从回归到分类的桥梁
+
+**核心公式：**
+
+```
+Softmax:  y_hat_i = exp(o_i) / sum_j(exp(o_j))
+
+性质: ① 非负 (exp > 0)  ② 和为 1 (归一化)  ③ 保持顺序 (exp 单调)
+```
+
+**交叉熵损失 (Cross-Entropy)：**
+```
+CE(y_hat, y) = -log(y_hat[y])   ← 取真实类别对应概率的负对数
+
+y_hat[y] = 1.0  → -log(1.0) = 0      完美预测, loss=0
+y_hat[y] = 0.5  → -log(0.5) = 0.693  不太确定
+y_hat[y] = 0.01 → -log(0.01) = 4.605 几乎错了, loss 很大
+```
+
+**⭐ 数值稳定技巧（非常重要！）：**
+```
+softmax(o) = softmax(o - max(o))   ← 减去每行最大值
+
+为什么？exp(1000) → inf, exp(-1000) → 0 → log(0) = -inf
+减掉 max: exp 不会溢出, 且数学上等价 (分子分母同时除以 exp(max))
+```
+
+**温度参数 T：**
+```
+softmax(o / T)  — T 控制"硬度"
+T → 0: 趋近 one-hot (硬决策，最大概率→1)
+T → ∞: 趋近均匀分布 (所有类别等概率)
+T = 1: 标准 softmax
+```
+这是知识蒸馏、强化学习中常用的技巧。
+
+**Softmax vs 逻辑回归：**
+- 逻辑回归 = Softmax 在 k=2 时的特例: `softmax([o1, o0])_1 = sigmoid(o1 - o0)`
+
+---
+
+### 3.5 Fashion-MNIST：图像分类入门数据集
+
+- 70,000 样本 (60k 训练 + 10k 测试)，10 类服装，28×28 灰度
+- `torchvision.datasets.FashionMNIST(root, train=True, transform, download)`
+- `transforms.ToTensor()` — PIL Image → float32 tensor [0, 1]
+- `DataLoader(dataset, batch_size=256, shuffle=True)` — 批量加载
+- 数据形状: `[batch, 1, 28, 28]` → Softmax 需展平为 `[batch, 784]`
+- 这是最简单的"图像模型"：每个像素是独立特征，无视空间结构（CNN 会利用空间结构）
+- 类别均衡：每类 ~6,000 样本，无需处理不平衡
+
+---
+
+### 3.6 Softmax 从零实现：在 Fashion-MNIST 上训练
+
+**手写组件：**
+```python
+# 数值稳定的 softmax
+def softmax(X):
+    X_exp = torch.exp(X - X.max(dim=1, keepdim=True).values)  # 减去 max!
+    return X_exp / X_exp.sum(dim=1, keepdim=True)
+
+# 交叉熵 — 取真实类别概率的负对数
+def cross_entropy(y_hat, y):
+    return -torch.log(y_hat[range(len(y_hat)), y])  # 高级索引
+
+# 模型 = softmax(X @ W + b)
+def net(X):
+    return softmax(X.reshape(-1, 784) @ W + b)
+```
+
+**Accumulator 累加器模式：**
+```python
+class Accumulator:
+    def __init__(self, n):
+        self.data = [0.0] * n
+    def add(self, *args):
+        self.data = [a + float(b) for a, b in zip(self.data, args)]
+    def __getitem__(self, idx):
+        return self.data[idx]
+```
+用于 epoch 级统计（正确数/总数），比直接用 Python 累加更干净。
+
+**训练结果：** 20 epoch，lr=0.1，batch=256
+- 测试准确率: **~83%**（随机猜测 10%，提升 73pp）
+- 线性模型在图像数据上也能达到不错效果
+- 每类准确率差异显著：简单类（Trouser/Bag ~90%）vs 困难类（Shirt ~65%）
+- Top 混淆对：Shirt↔T-shirt/top、Shirt↔Pullover、Sneaker↔Ankle boot
+
+**可视化产出：** Loss 曲线 + 准确率曲线 + 每类准确率柱状图 + 混淆矩阵 + 错误样本展示
+
+---
+
+### 3.7 Softmax 简洁实现：一行模型 + 一个损失函数
+
+**⭐ 核心认知：`nn.CrossEntropyLoss = LogSoftmax + NLLLoss`**
+
+```python
+model = nn.Sequential(
+    nn.Flatten(),         # [batch, 1, 28, 28] → [batch, 784]
+    nn.Linear(784, 10)    # [batch, 784] → [batch, 10]
+)
+loss_fn = nn.CrossEntropyLoss()   # 内部做 LogSoftmax + NLL
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+```
+
+**⚠️ 经典坑：CrossEntropyLoss 期望 raw logits（不是 softmax 后的概率！）**
+```
+从零:  y_hat = softmax(X @ W + b)      ← 需要手动 softmax
+       l = -log(y_hat[range(n), y])     ← 然后取负对数
+       l.sum().backward()
+
+框架:  logits = model(X)                ← raw logits, 不要 softmax!
+       l = loss_fn(logits, y)           ← 内部做 LogSoftmax + NLL
+       l.backward()                     ← loss 已取 mean
+```
+
+**另一关键差异：**
+- 从零 loss 是 sum → 需要 `l.sum().backward()`，SGD 内 `/batch_size`
+- 框架 loss 是 mean → 直接 `l.backward()`，optimizer 不管 batch_size
+
+**权重可视化：** 学到的 `W` (10×784) 可 reshape 为 `(10, 28, 28)` 灰度图 — 每个类别对应一个 28×28 的"模板"，浅色=正权重（该像素是此类），深色=负权重（该像素不是此类）。
+
+**代码量对比：** 从零 ~120 行 vs 框架 ~60 行 — 减半！
+
+**训练结果：** 与从零实现性能一致（~83%），训练/测试差距小 → 几乎没有过拟合。
+
+---
+
+### Ch03 总体收获
+
+1. **深度学习三组件统一框架：模型 → 损失 → 优化** — 线性回归和 Softmax 分类共享同一训练循环
+2. **从零 → 简洁的双版本对照** — 每个模型都写两遍：先手写理解底层，再用框架体会抽象
+3. **Softmax + 交叉熵 = 分类问题标配** — 数值稳定技巧（减 max）是工业界标准做法
+4. **CrossEntropyLoss 输入 raw logits** — 这是 PyTorch 新手最容易犯的错
+5. **loss sum vs mean** — 从零用 sum+SGD 内除以 batch_size，框架用 mean+optim 不关心 batch_size
+6. **线性模型在图像上的上限** — 784 维 → 10 类，Softmax 回归 ~83% 准确率。这是 CNN 的 baseline：后面每加一层卷积，就能突破这个天花板
+7. **混淆矩阵是分类调试利器** — 能看到模型在哪些类别对上犯错，不是只看一个准确率数字
+
 ### Ch03 工程踩坑
 
 | 坑 | 表现 | 解决 |
 |----|------|------|
-| (暂无 — 代码一次跑通) | — | 注意: `matplotlib` 中文字体需 `font.sans-serif` 设置 |
+| CrossEntropyLoss 输入 softmax 后的概率 | loss 不降或 NaN（双重 softmax） | 传入 raw logits，框架内部做 LogSoftmax |
+| 从零 loss 用 sum，框架 loss 用 mean | `l.backward()` 梯度量级不一致 | 从零: `l.sum().backward()` + SGD 内 `/batch_size`；框架: 直接用 mean |
+| softmax 数值溢出 | 大数据时 `exp(1000) → inf` | 减去每行最大值: `softmax(o - max(o))` |
+| 中文字体 | matplotlib 中文显示方块 | `font.sans-serif` 设置 SimHei/DejaVu Sans |
+| 测试时忘记 `model.eval()` + `no_grad()` | Dropout/BatchNorm 行为不对、梯度积压 | 测试循环前加 `model.eval()` + `with torch.no_grad():` |
 
 
 
