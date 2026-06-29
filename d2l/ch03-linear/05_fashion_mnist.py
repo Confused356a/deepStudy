@@ -28,6 +28,7 @@ transform = transforms.ToTensor()
 
 # 检查本地是否已有数据集 (缓存优先原则)
 import os
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 data_root = '../../datasets'
 os.makedirs(data_root, exist_ok=True)
 
@@ -70,7 +71,7 @@ for class_idx in range(10):
 
 plt.suptitle('Fashion-MNIST: 每类一个样本', fontsize=14, y=1.02)
 plt.tight_layout()
-plt.savefig('d2l/ch03-linear/notes/fashion_mnist_samples.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'fashion_mnist_samples.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[saved] notes/fashion_mnist_samples.png")
 
@@ -130,7 +131,7 @@ for i, idx in enumerate(random_indices):
 
 plt.suptitle('Fashion-MNIST: 随机 16 张训练样本', fontsize=13)
 plt.tight_layout()
-plt.savefig('d2l/ch03-linear/notes/fashion_mnist_grid.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'fashion_mnist_grid.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[saved] notes/fashion_mnist_grid.png")
 

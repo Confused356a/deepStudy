@@ -11,6 +11,9 @@ import torch
 import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
@@ -80,7 +83,7 @@ ax2.legend()
 ax2.grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.savefig('d2l/ch03-linear/notes/softmax_demo.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'softmax_demo.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("\n[saved] notes/softmax_demo.png — softmax 转换 + 温度效应")
 
@@ -115,7 +118,7 @@ for p in [0.01, 0.1, 0.5, 0.9, 1.0]:
                 textcoords="offset points", xytext=(10, 10), fontsize=9)
 
 plt.tight_layout()
-plt.savefig('d2l/ch03-linear/notes/cross_entropy_curve.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'cross_entropy_curve.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[saved] notes/cross_entropy_curve.png — 交叉熵损失曲线")
 

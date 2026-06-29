@@ -9,6 +9,9 @@ d2l 3.1 — 线性回归理论 (Linear Regression Theory)
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # 全局中文字体设置
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
@@ -116,7 +119,7 @@ for ax, h, title in zip(axes,
     ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.savefig('d2l/ch03-linear/notes/gradient_descent_lr.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'gradient_descent_lr.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[saved] notes/gradient_descent_lr.png — 学习率影响可视化")
 
@@ -153,7 +156,7 @@ axes[1].set_title(f'残差分布 (std={residuals.std():.4f}, 真实 noise std=0.
 axes[1].grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.savefig('d2l/ch03-linear/notes/linear_regression_fit.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'linear_regression_fit.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[saved] notes/linear_regression_fit.png — 预测 vs 真实 + 残差分布")
 
@@ -228,7 +231,7 @@ ax.legend(fontsize=9)
 ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.savefig('d2l/ch03-linear/notes/gradient_descent_paths.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'gradient_descent_paths.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[saved] notes/gradient_descent_paths.png — 三种 GD 变体的优化路径")
 

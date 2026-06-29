@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
 
@@ -311,7 +313,7 @@ axes[1, 1].set_title('混淆矩阵 (行归一化)')
 plt.colorbar(im, ax=axes[1, 1], shrink=0.8)
 
 plt.tight_layout()
-plt.savefig('d2l/ch03-linear/notes/softmax_scratch_results.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'softmax_scratch_results.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[saved] notes/softmax_scratch_results.png — 训练结果四合一")
 
@@ -362,7 +364,7 @@ for i, (img, true_l, pred_l) in enumerate(error_samples[:8]):
 
 plt.suptitle('模型预测错误的样本', fontsize=13)
 plt.tight_layout()
-plt.savefig('d2l/ch03-linear/notes/softmax_errors.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'softmax_errors.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[saved] notes/softmax_errors.png — 错误样本展示")
 

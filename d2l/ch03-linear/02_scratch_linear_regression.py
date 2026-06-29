@@ -16,6 +16,9 @@ d2l 3.2 — 线性回归从零实现 (Linear Regression from Scratch)
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
@@ -68,7 +71,7 @@ axes[2].set_title(f'观测噪声分布 (std={noise_samples.std():.4f}, 真实 0.
 axes[2].grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.savefig('d2l/ch03-linear/notes/synthetic_data.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'synthetic_data.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[saved] notes/synthetic_data.png — 合成数据可视化")
 
@@ -287,7 +290,7 @@ axes[1, 1].legend()
 axes[1, 1].grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.savefig('d2l/ch03-linear/notes/training_results.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'training_results.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("\n[saved] notes/training_results.png — 训练结果四合一")
 
@@ -330,7 +333,7 @@ ax.legend(fontsize=9)
 ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.savefig('d2l/ch03-linear/notes/learning_rate_comparison.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'learning_rate_comparison.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[saved] notes/learning_rate_comparison.png — 学习率对比")
 print("结论: lr=0.03 最快收敛; lr=0.001 太慢; lr=2.0 发散 (loss 爆炸)")

@@ -14,6 +14,9 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
@@ -237,7 +240,7 @@ ax2.legend()
 ax2.grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.savefig('d2l/ch03-linear/notes/scratch_vs_concise.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'scratch_vs_concise.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("\n[saved] notes/scratch_vs_concise.png — 从零 vs 简洁对比")
 

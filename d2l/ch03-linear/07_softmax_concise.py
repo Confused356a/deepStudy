@@ -18,6 +18,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
 
@@ -212,11 +214,11 @@ summary = (
     f"  框架: ~60 行 (减半!)"
 )
 axes[1, 2].text(0.05, 0.95, summary, transform=axes[1, 2].transAxes,
-                fontsize=10, fontfamily='monospace', verticalalignment='top',
+                fontsize=10, verticalalignment='top',
                 bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
 plt.tight_layout()
-plt.savefig('d2l/ch03-linear/notes/softmax_concise_results.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'softmax_concise_results.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[saved] notes/softmax_concise_results.png — 结果 + 权重可视化")
 
@@ -253,7 +255,7 @@ for i in range(6):
 
 plt.suptitle('模型预测示例 (全部正确!)', fontsize=13)
 plt.tight_layout()
-plt.savefig('d2l/ch03-linear/notes/softmax_predictions.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'softmax_predictions.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[saved] notes/softmax_predictions.png")
 
