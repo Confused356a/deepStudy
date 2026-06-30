@@ -16,7 +16,8 @@
 | **04-cnn** | ✅ | Conv2d → 训练/保存/加载（13个实验）|
 | **d2l-Ch02** | ✅ | 预备知识 6 小节（2026-06-24 完成） |
 | **d2l-Ch03** | ✅ | 线性神经网络全 7 节：线性回归+Softmax 分类 — 从零 & 简洁双版本 (2026-06-28) |
-| d2l-Ch04+ | ⬜ | MLP → 现代 CNN → Transformer（待继续）|
+| **d2l-Ch04** | ✅ | 多层感知机全 8 节：感知机→激活函数→MLP从零/简洁→过拟合→正则化→数值稳定性 (2026-06-30) |
+| d2l-Ch05+ | ⬜ | 深度学习计算 → 现代 CNN → Transformer（待继续）|
 | 05-rnn | ⬜ | 待开始 |
 | 06-transfer-learning | ⬜ | 待开始 |
 | 07-generative | ⬜ | 待开始 |
@@ -447,6 +448,217 @@ optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
 | `plt.savefig` 硬编码相对路径 | 从非项目根目录运行脚本 → `FileNotFoundError` | `SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))` + `os.path.join(SCRIPT_DIR, 'notes', ...)` |
 
 
+
+---
+
+## d2l Ch04 — 多层感知机 (2026-06-30 完成 ✅)
+
+> 代码位置: `d2l/ch04-mlp/`，共 8 节，从感知机理论到 MLP 训练 + 正则化全套
+
+| # | 文件 | 主题 | 关键收获 |
+|---|------|------|----------|
+| 01 | `01_perceptron.py` | 4.1 感知机 | Rosenblatt 感知机、XOR 线性不可分、加隐藏层突破非线性 |
+| 02 | `02_activation.py` | 4.1 激活函数 | ReLU/Sigmoid/Tanh 对比、梯度消失可视化、LeakyReLU/GELU |
+| 03 | `03_mlp_scratch.py` | 4.2 MLP 从零 | 784→256→10, Xavier 初始化, ~85.5% (vs linear 83%) |
+| 04 | `04_mlp_concise.py` | 4.3 MLP 简洁 | nn.Sequential 一行模型, 从零 vs 框架对照表 |
+| 05 | `05_underfit_overfit.py` | 4.4 模型选择 | 多项式回归, 1~20 阶 U 形误差, 泛化差距 |
+| 06 | `06_weight_decay.py` | 4.5 权重衰减 | L2 正则化, p>>n 场景, λ 扫描 |
+| 07 | `07_dropout.py` | 4.6 Dropout | 从零 mask 实现, nn.Dropout, 小数据对比 p=0/0.3/0.5 |
+| 08 | `08_numerical_stability.py` | 4.7-4.8 数值稳定性 | 50 层梯度消失/爆炸, Xavier/He 初始化, 方差传播 |
+
+---
+
+### 4.1 感知机 + 激活函数
+
+**感知机的历史意义：**
+- Frank Rosenblatt 1957 年提出 — 第一个"可学习"的神经网络 (电动机驱动!)
+- y = sign(w·x + b) — 线性二分类器
+- Minsky & Papert 1969 年证明感知机无法解决 XOR → 直接导致 1970s "AI 寒冬"
+- 解决方案: **加隐藏层 + 非线性激活** — 这就是 MLP
+
+**XOR 问题的本质:**
+```
+(0,0)→0  (0,1)→1
+(1,0)→1  (1,1)→0
+```
+4 个点, 没有一条直线能分开。加一隐藏层 (2 神经元 + ReLU) → 把原始空间映射到新空间 → 线性可分。
+
+**激活函数对比:**
+
+| 函数 | 输出范围 | 梯度范围 | 梯度消失 | 使用场景 |
+|------|---------|---------|:---:|------|
+| ReLU max(0,z) | [0, ∞) | {0, 1} | 仅负区间 | ⭐ CNN/MLP 默认 |
+| Sigmoid 1/(1+e^{-z}) | (0, 1) | (0, 0.25] | ❌ 严重 | 门控 (LSTM/GRU) |
+| Tanh | (-1, 1) | (0, 1] | ❌ 饱和区 | RNN (已基本被 ReLU 替代) |
+| LeakyReLU | (-∞, ∞) | {0.01, 1} | 缓解 | ReLU 的改进版 |
+| GELU | (-∞, ∞) | 平滑 | 无 | Transformer 标配 |
+
+**⭐ 梯度消失实验：** 10 层全连接, Sigmoid → 首层梯度 ~10^-8, ReLU → 首层梯度 ~10^-2。
+说明 ReLU 是深层网络可行的关键。
+
+---
+
+### 4.2–4.3 MLP 从零 & 简洁实现
+
+**从零实现的关键组件:**
+```python
+def net(X, W1, b1, W2, b2):
+    X = X.reshape(-1, 784)
+    H = relu(X @ W1 + b1)        # 隐藏层 + ReLU
+    return softmax_stable(H @ W2 + b2)  # 输出层 + softmax
+```
+
+**Xavier 初始化:**
+- `nn.init.xavier_uniform_(W)` — 权重方差 = 2/(fan_in + fan_out)
+- 目的: 保持每层激活值方差 ≈ 1 → 梯度流稳定
+
+**训练结果:**
+- MLP (784→256→10): ~85.5% (提升了 2.5pp vs 线性模型 83%)
+- 隐藏层大小对比: 64 (84.3%) → 128 (85.1%) → 256 (85.5%) → 512 (85.6%) → 1024 (85.5%)
+  - 边际收益递减: 256 之后提升极小, 参数量却翻倍
+
+**⭐ 从零 vs 框架对照:**
+
+| 组件 | 从零 (~80 行) | 框架 (~8 行) |
+|------|-------------|------------|
+| 模型 | `def net(X): H=relu(X@W1+b1); return softmax(H@W2+b2)` | `nn.Sequential(Flatten, Linear(784,256), ReLU, Linear(256,10))` |
+| 损失 | `def cross_entropy(y_hat,y): -log(y_hat[range(n),y])` | `nn.CrossEntropyLoss()` |
+| 优化 | `def sgd(params,lr,bs): p-=lr*p.grad/bs; p.grad.zero_()` | `optimizer.zero_grad(); optimizer.step()` |
+| 数据 | 手写 yield 生成器 | `DataLoader(TensorDataset(X,y), ...)` |
+
+---
+
+### 4.4 欠拟合、过拟合与模型选择
+
+**三类现象:**
+- **欠拟合**: 模型太简单 → train loss 和 test loss 都高
+- **正常**: 模型容量适中 → test loss 接近 train loss
+- **过拟合**: 模型太复杂 → train loss 很低, test loss 很高 (记住了噪声!)
+
+**多项式回归实验:**
+- 1 阶 (直线): 欠拟合, train_MSE=0.24, test_MSE=0.26
+- 4 阶: 完美, train_MSE=0.01, test_MSE=0.01
+- 20 阶: 过拟合, train_MSE=0.001, test_MSE=2.47 (泛化差距=2.47!)
+
+**U 形曲线:** 模型容量 ↑ → train error 单调 ↓, test error 先 ↓ 再 ↑
+- 转折点 = 最优模型容量
+- 泛化差距 = test_error - train_error, 随容量增大单调增大
+
+**数据量的作用:** 同一 18 阶模型, 10 个训练点 → test=5.32 (严重过拟合), 160 个点 → test=0.03 (基本正常)
+
+---
+
+### 4.5 权重衰减 (L2 正则化)
+
+**数学:**
+```
+无正则: minimize  L(w)
+L2:     minimize  L(w) + (λ/2)·||w||²
+
+梯度:   w ← (1 - lr·λ)·w - lr·dL/dw    ← 每次先"衰减"权重 1-lr·λ
+```
+
+**关键实验 (p >> n):** 20 个样本, 200 维特征 (只有前 5 维是真实信号)
+- λ=0: 训练完美 (train_loss=0.0001), 测试差 (test_loss=0.08) — 过拟合
+- λ=3: train=0.002, test=0.003 — 泛化好, 权重稀疏
+- λ=20: train=0.01, test=0.001 — 强正则, 噪声维度权重被压到接近 0
+
+**Fashion-MNIST MLP:**
+- 无 weight_decay: ~85.5%, weight_decay=0.001: ~85.8% (小幅提升)
+
+**直觉:** L2 惩罚大权重 → 模型更平滑 → 对输入微小变化不敏感 → 泛化更好
+
+---
+
+### 4.6 Dropout
+
+**原理:**
+```
+训练: h' = h ⊙ mask / (1-p)    mask ~ Bernoulli(1-p)
+测试: h' = h                    (不丢弃, 因训练时已除以 1-p 做期望补偿)
+```
+
+**为什么要除 (1-p)?** 保持激活值的期望不变:
+```
+E[h'] = E[h ⊙ mask] / (1-p) = E[h] * E[mask] / (1-p) = E[h] * (1-p) / (1-p) = E[h]
+```
+
+**从零实现:**
+```python
+def dropout_layer(X, p_drop):
+    if not torch.is_grad_enabled():  # eval 模式
+        return X
+    mask = (torch.rand(X.shape) > p_drop).float()
+    return mask * X / (1 - p_drop)
+```
+
+**Fashion-MNIST 小数据实验 (5000 训练样本):**
+- 无 Dropout: ~82.5%
+- Dropout p=0.3: ~84.0% (最优)
+- Dropout p=0.5: ~83.2% (太强, 略有欠拟合)
+
+**和 L2 的区别:**
+- L2: 惩罚权重大小 → 每个权重变小
+- Dropout: 随机丢弃 → 打破神经元间的"共适应", 相当于训练子网络 ensemble
+
+**关键提醒:** `model.eval()` 自动关闭 Dropout, 忘记调用 → 测试结果不稳定
+
+---
+
+### 4.7–4.8 数值稳定性与参数初始化
+
+**梯度消失/爆炸的根源:** 链式法则导致乘法叠加
+```
+dL/dx_1 = dL/dx_n * ∏ W_i^T * phi'(z_i)
+```
+若每层 |W| < 1 → 梯度指数衰减 (消失), 若 |W| > 1 → 指数增长 (爆炸)
+
+**50 层全连接实验:**
+- 权重 std=0.3 → 首层梯度均值: ~1e+8 (爆炸!)
+- 权重 std=0.01 → 首层梯度均值: ~1e-20 (消失!)
+
+**Xavier vs He 初始化:**
+
+| 方法 | 方差公式 | 适用 |
+|------|---------|------|
+| Xavier | 2/(fan_in + fan_out) | Sigmoid/Tanh |
+| He (Kaiming) | 2/fan_in | ReLU (补偿负半轴截断) |
+
+**为什么 He 只除以 fan_in?** ReLU 把一半的激活值置 0 (负半轴), 方差减半。He 用 2/fan_in 补偿了这个损失。
+
+**激活值方差传播实验:** 10 层 ReLU 网络
+- Random N(0,0.01): 方差从 1.0 衰减到 ~10^-15 → 梯度消失
+- Xavier: 方差缓慢衰减 → 勉强可训
+- He: 方差保持 ~1.0 → 梯度流畅通!
+
+**训练实验 (Fashion-MNIST):**
+- Random N(0,0.01): ~82%, Loss 震荡
+- Xavier: ~85%, 收敛较快
+- He: ~85%, 收敛最快最稳
+
+---
+
+### Ch04 总体收获
+
+1. **感知机 → MLP = 加隐藏层 + 非线性** — 这是所有深度学习的起点
+2. **ReLU 是默认选择** — 正区间梯度=1 缓解梯度消失, 计算简单
+3. **过拟合的三种对策: 加数据 > 正则化 (Weight Decay / Dropout) > 降容量**
+4. **Weight Decay = L2 正则化**, 惩罚大权重使模型更平滑
+5. **Dropout = 打破共适应**, 相当于训练子网络 ensemble
+6. **好初始化是训练的前提** — ReLU + He init + Xavier 让深层网络可训
+7. **训练循环不变** — 从 Ch03 线性到 Ch04 非线性, forward→loss→backward→step 完全一致
+8. **每加一层就突破一点天花板** — 线性 83% → 单隐藏层 MLP 85.5%, 后面 CNN 会更高
+
+### Ch04 工程踩坑
+
+| 坑 | 表现 | 解决 |
+|----|------|------|
+| 深层 Sigmoid 梯度消失 | loss 不下降, 浅层权重不更新 | 换 ReLU + He 初始化 |
+| 随机初始化方差不当 | 激活值 → 0 或 → inf | Xavier/He 初始化 |
+| weight_decay 太大 | 欠拟合, 所有权重→0 | 从小的 λ (1e-4~0.01) 开始调 |
+| Dropout 忘记 model.eval() | 测试时仍在随机丢弃 | `model.eval()` 关闭 Dropout |
+| CrossEntropyLoss 前加 softmax | 双重 softmax, loss 不降 | 模型最后一层不加 softmax |
+| 多项式阶数 ≈ 数据量 | train 完美 test 极差 | train/validation split 监控泛化 |
 
 ---
 
