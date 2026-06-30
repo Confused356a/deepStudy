@@ -35,18 +35,16 @@ print("=" * 60)
 print("\n[1] 加载 Fashion-MNIST...")
 
 transform = transforms.ToTensor()
-data_root = os.path.join(DATA_DIR, 'fashion_mnist')
 train_dataset = torchvision.datasets.FashionMNIST(
-    root=data_root, train=True, transform=transform, download=False)
+    root=DATA_DIR, train=True, transform=transform, download=False)
 test_dataset = torchvision.datasets.FashionMNIST(
-    root=data_root, train=False, transform=transform, download=False)
+    root=DATA_DIR, train=False, transform=transform, download=False)
 
-# 先用 download=True 尝试，如果已存在则 download=False 即可
 if len(train_dataset) == 0:
     train_dataset = torchvision.datasets.FashionMNIST(
-        root=data_root, train=True, transform=transform, download=True)
+        root=DATA_DIR, train=True, transform=transform, download=True)
     test_dataset = torchvision.datasets.FashionMNIST(
-        root=data_root, train=False, transform=transform, download=True)
+        root=DATA_DIR, train=False, transform=transform, download=True)
 
 num_inputs = 28 * 28   # 784
 num_hidden = 256

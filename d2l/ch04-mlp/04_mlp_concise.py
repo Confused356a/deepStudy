@@ -35,16 +35,15 @@ print("=" * 60)
 print("\n[1] 加载数据...")
 
 transform = transforms.ToTensor()
-data_root = os.path.join(DATA_DIR, 'fashion_mnist')
 train_dataset = torchvision.datasets.FashionMNIST(
-    root=data_root, train=True, transform=transform, download=False)
+    root=DATA_DIR, train=True, transform=transform, download=False)
 test_dataset = torchvision.datasets.FashionMNIST(
-    root=data_root, train=False, transform=transform, download=False)
+    root=DATA_DIR, train=False, transform=transform, download=False)
 if len(train_dataset) == 0:
     train_dataset = torchvision.datasets.FashionMNIST(
-        root=data_root, train=True, transform=transform, download=True)
+        root=DATA_DIR, train=True, transform=transform, download=True)
     test_dataset = torchvision.datasets.FashionMNIST(
-        root=data_root, train=False, transform=transform, download=True)
+        root=DATA_DIR, train=False, transform=transform, download=True)
 
 batch_size = 256
 train_loader = torch.utils.data.DataLoader(

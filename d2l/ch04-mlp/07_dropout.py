@@ -117,15 +117,14 @@ import torchvision.transforms as transforms
 DATA_DIR = os.path.join(os.path.dirname(SCRIPT_DIR), '..', 'datasets')
 
 transform = transforms.ToTensor()
-data_root = os.path.join(DATA_DIR, 'fashion_mnist')
 try:
-    train_set = torchvision.datasets.FashionMNIST(root=data_root, train=True, transform=transform, download=False)
-    test_set = torchvision.datasets.FashionMNIST(root=data_root, train=False, transform=transform, download=False)
+    train_set = torchvision.datasets.FashionMNIST(root=DATA_DIR, train=True, transform=transform, download=False)
+    test_set = torchvision.datasets.FashionMNIST(root=DATA_DIR, train=False, transform=transform, download=False)
     if len(train_set) == 0:
         raise RuntimeError
 except Exception:
-    train_set = torchvision.datasets.FashionMNIST(root=data_root, train=True, transform=transform, download=True)
-    test_set = torchvision.datasets.FashionMNIST(root=data_root, train=False, transform=transform, download=True)
+    train_set = torchvision.datasets.FashionMNIST(root=DATA_DIR, train=True, transform=transform, download=True)
+    test_set = torchvision.datasets.FashionMNIST(root=DATA_DIR, train=False, transform=transform, download=True)
 
 batch_size = 256
 train_ld = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True)

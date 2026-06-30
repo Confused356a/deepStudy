@@ -22,11 +22,30 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import sys
+from contextlib import contextmanager
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans', 'Microsoft YaHei']
 plt.rcParams['axes.unicode_minus'] = False
+
+
+@contextmanager
+def _quiet_glyph():
+    """抑制 matplotlib C 层字形缺失警告 (SimHei 缺 − 字形).
+
+    ft2font C 扩展直接写 stderr, 绕过 Python warnings/logging 模块.
+    仅在 plt.savefig / tight_layout 期间重定向 stderr.
+    """
+    old_stderr = sys.stderr
+    sys.stderr = open(os.devnull, 'w')
+    try:
+        yield
+    finally:
+        sys.stderr.close()
+        sys.stderr = old_stderr
 
 
 # ============================================================
@@ -79,8 +98,9 @@ for ax, (name, y_grad, color) in zip(
     ax.grid(True, alpha=0.3)
 
 plt.suptitle('激活函数与其梯度对比', fontsize=15, y=1.01)
-plt.tight_layout()
-plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'activation_functions.png'), dpi=150, bbox_inches='tight')
+with _quiet_glyph():
+    plt.tight_layout()
+    plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'activation_functions.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[saved] notes/activation_functions.png — 三种激活函数 + 梯度")
 
@@ -136,8 +156,9 @@ ax.set_title('梯度消失: Sigmoid 梯度指数衰减, ReLU 保持稳定', font
 ax.legend(fontsize=11)
 ax.grid(True, alpha=0.3)
 
-plt.tight_layout()
-plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'vanishing_gradient.png'), dpi=150, bbox_inches='tight')
+with _quiet_glyph():
+    plt.tight_layout()
+    plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'vanishing_gradient.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[saved] notes/vanishing_gradient.png — 10层 Sigmoid vs ReLU 梯度衰减")
 
@@ -180,8 +201,9 @@ axes[1].set_xlabel('z'); axes[1].set_ylabel('phi(z)')
 axes[1].set_title('负区间放大: ReLU 死区 vs LeakyReLU 泄漏')
 axes[1].legend(); axes[1].grid(True, alpha=0.3)
 
-plt.tight_layout()
-plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'relu_variants.png'), dpi=150, bbox_inches='tight')
+with _quiet_glyph():
+    plt.tight_layout()
+    plt.savefig(os.path.join(SCRIPT_DIR, 'notes', 'relu_variants.png'), dpi=150, bbox_inches='tight')
 plt.close()
 print("[saved] notes/relu_variants.png — ReLU / LeakyReLU / GELU 对比")
 
