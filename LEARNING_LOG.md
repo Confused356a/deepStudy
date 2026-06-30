@@ -2,7 +2,7 @@
 
 > 深度学习系统学习——逐组件理解，从基础到论文复现。基于 PyTorch + CUDA。
 
-*最后更新：2026-06-28 21:50*  |  自动维护，每天检查更新
+*最后更新：2026-06-30 15:00*  |  自动维护，每天检查更新
 
 ---
 
@@ -160,6 +160,7 @@ Conv2d → MaxPool2d → ReLU/Sigmoid → Linear → Sequential → Loss → 训
 | 模型独立文件 | `from model import` 复用，`if __name__` 测试形状 |
 | state_dict() | 无参方法，不能传路径，返回 OrderedDict |
 | GPU 训练三步骤 | `device` → `model.to(device)` → `imgs.to(device)` + `targets.to(device)` |
+| savefig 路径 | 用 `__file__` + `os.path.join` 生成绝对路径，不要硬编码相对路径 |
 
 ---
 
@@ -443,6 +444,7 @@ optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
 | softmax 数值溢出 | 大数据时 `exp(1000) → inf` | 减去每行最大值: `softmax(o - max(o))` |
 | 中文字体 | matplotlib 中文显示方块 | `font.sans-serif` 设置 SimHei/DejaVu Sans |
 | 测试时忘记 `model.eval()` + `no_grad()` | Dropout/BatchNorm 行为不对、梯度积压 | 测试循环前加 `model.eval()` + `with torch.no_grad():` |
+| `plt.savefig` 硬编码相对路径 | 从非项目根目录运行脚本 → `FileNotFoundError` | `SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))` + `os.path.join(SCRIPT_DIR, 'notes', ...)` |
 
 
 
